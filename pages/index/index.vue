@@ -21,7 +21,7 @@
       :paused="searchState.paused"
       :placeholder="placeholder"
       @search="onSearch"
-      @reset="resetSearch"
+      @reset="fullReset"
       @pause="pauseSearch"
       @continue="handleContinueSearch" />
 
@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import SearchBox from "./SearchBox.vue";
 import ResultGroup from "./ResultGroup.vue";
 import HotSearchSection from "./HotSearchSection.vue";
@@ -130,6 +130,16 @@ const siteUrl = (config.public?.siteUrl as string) || "";
 
 // 热搜组件引用
 const hotSearchRef = ref<InstanceType<typeof HotSearchSection> | null>(null);
+
+// 页面加载时初始化热搜数据
+onMounted(async () => {
+  // 等待组件挂载完成
+  await new Promise(resolve => setTimeout(resolve, 100));
+  if (hotSearchRef.value) {
+    console.log('[index] 页面加载，初始化热搜数据');
+    await hotSearchRef.value.init();
+  }
+});
 
 // SEO 元数据
 useSeoMeta({
@@ -227,11 +237,16 @@ async function handleContinueSearch() {
 
 // 完全重置 - 清空输入框、结果、状态，并刷新热搜数据
 async function fullReset() {
+  console.log('[index] fullReset() 被调用');
   kw.value = "";
   resetSearch();
   // 重置时刷新热搜数据
+  console.log('[index] hotSearchRef.value:', hotSearchRef.value);
   if (hotSearchRef.value) {
+    console.log('[index] 调用 hotSearchRef.value.refresh()');
     await hotSearchRef.value.refresh();
+  } else {
+    console.log('[index] hotSearchRef.value 为 null，无法刷新热搜');
   }
 }
 

@@ -47,26 +47,42 @@ const props = defineProps<Props>();
 // 状态
 const loading = ref(false);
 const searches = ref<HotSearchItem[]>([]);
+const hasInitialized = ref(false);
 
 // 获取热搜数据
 async function fetchHotSearches() {
+  console.log('[HotSearchSection] 开始获取热搜数据...');
   loading.value = true;
   try {
     const response = await fetch('/api/hot-searches?limit=30');
     const data = await response.json();
+    console.log('[HotSearchSection] API 响应:', data);
 
     if (data.code === 0 && data.data?.hotSearches) {
       // 按分数排序，高分在前
       searches.value = data.data.hotSearches
         .sort((a: HotSearchItem, b: HotSearchItem) => b.score - a.score)
         .slice(0, 30);
+      console.log('[HotSearchSection] 获取到热搜数据:', searches.value.length, '条');
     }
   } catch (error) {
+    console.error('[HotSearchSection] 获取热搜失败:', error);
     // 失败时不显示任何内容
     searches.value = [];
   } finally {
     loading.value = false;
   }
+}
+
+// 首次初始化（只在页面加载时执行一次）
+async function init() {
+  if (hasInitialized.value) {
+    console.log('[HotSearchSection] 已初始化，跳过');
+    return;
+  }
+  console.log('[HotSearchSection] 首次初始化...');
+  hasInitialized.value = true;
+  await fetchHotSearches();
 }
 
 // 根据分数计算标签样式
@@ -109,9 +125,10 @@ function onSearchClick(term: string) {
   props.onSearch(term);
 }
 
-// 暴露刷新方法给父组件
+// 暴露方法给父组件
 defineExpose({
-  refresh: fetchHotSearches
+  init,           // 首次初始化（只执行一次）
+  refresh: fetchHotSearches  // 手动刷新
 });
 </script>
 
