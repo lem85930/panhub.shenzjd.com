@@ -113,6 +113,11 @@ function onSearchClick(term: string) {
 onMounted(() => {
   fetchHotSearches();
 });
+
+// 暴露刷新方法给父组件
+defineExpose({
+  refresh: fetchHotSearches
+});
 </script>
 
 <style scoped>

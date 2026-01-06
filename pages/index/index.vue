@@ -121,12 +121,13 @@
 
     <!-- 热搜推荐 -->
     <section v-if="!searchState.searched && !searchState.loading" class="hot-search-section">
-      <HotSearchSection :on-search="quickSearch" />
+      <HotSearchSection ref="hotSearchRef" :on-search="quickSearch" />
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from "vue";
 import SearchBox from "./SearchBox.vue";
 import ResultGroup from "./ResultGroup.vue";
 import HotSearchSection from "./HotSearchSection.vue";
@@ -193,6 +194,9 @@ const filterPlatform = ref<string>("all");
 const initialVisible = 3;
 const expandedSet = ref<Set<string>>(new Set());
 
+// 热搜组件引用
+const hotSearchRef = ref<InstanceType<typeof HotSearchSection> | null>(null);
+
 // 使用新的搜索 composable
 const { state: searchState, performSearch, resetSearch, copyLink, pauseSearch, continueSearch } = useSearch();
 const { settings } = useSettings();
@@ -216,6 +220,11 @@ async function onSearch() {
   if (!kw.value || searchState.value.loading) return;
 
   await performSearch(getSearchOptions());
+
+  // 搜索完成后刷新热搜数据
+  if (hotSearchRef.value) {
+    hotSearchRef.value.refresh();
+  }
 }
 
 // 快速搜索

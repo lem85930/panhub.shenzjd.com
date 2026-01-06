@@ -335,6 +335,9 @@ export function useSearch() {
     const mySeq = ++searchSeq;
     const start = performance.now();
 
+    // 记录到热搜（在搜索开始时，不管有没有结果都记录）
+    recordHotSearch(keyword);
+
     try {
       // 1) 快速搜索
       const fastMerged = await performFastSearch(options);
@@ -351,11 +354,6 @@ export function useSearch() {
       await performDeepSearch(options, mySeq);
       // 如果暂停了，停止后续操作
       if (state.value.paused) return;
-
-      // 3) 记录到热搜（异步，不阻塞搜索结果）
-      if (mySeq === searchSeq) {
-        recordHotSearch(keyword);
-      }
     } catch (error: any) {
       state.value.error = error?.data?.message || error?.message || "请求失败";
     } finally {
